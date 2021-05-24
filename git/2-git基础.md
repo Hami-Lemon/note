@@ -150,3 +150,12 @@ doc/**/*.pdf
 
 `git checkout -- <file>`或`git restore <file>`撤消未暂存文件的修改
 
+## 远程仓库使用
+
+### 查看远程仓库
+
+`git remote`
+
+添加远程仓库
+
+`git remote ad <名称> <url>`
