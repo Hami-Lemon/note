@@ -1,0 +1,538 @@
+JAVA基本用法
+<!--more-->
+## idea
+
+- 项目结构
+> 项目
+>> 模块
+>>> 包
+>>> 包
+
+- 快捷键
+![快捷键](https://gitee.com/Hami-Lemon/image-repo/raw/master/images/2021/05/25/20210525113730.png)
+## 数组
+
+- 初始化
+    1. `int[] array = new int[10];`
+    2. `int[] array = new int[] {1, 2, 3, 4, };`
+    3. `int[] array = {1, 2, 3, 4,...};`
+- 注意
+    数组同c语言，数组名相当于指针
+    函数传参时是取址引用（同c语言）
+## 内存划分
+
+- 栈（stack):方法的局部变量
+- 堆（heap):new 出来的东西,会自动初始化
+- 方法区（method area):存储.class相关信息，包含方法的信息只包含信息，运行始终在栈内
+- 本地方法栈（native method stack）：与操作系统相关
+- 寄存器（Pc register)：与cpu相关
+
+![](https://gitee.com/Hami-Lemon/image-repo/raw/master/images/2021/05/25/20210525113719.png)
+
+## 面向对象
+- 类
+    一组相关属性和行为的集合，可以看成是一类事物的集合的模块，用于描述一类事物
+- 对象
+    类是对一类事物的描述，是抽象的
+    对象是一类事物的实例，是具体的
+    类是对象的模板，对象是类的实例
+    （类实例化即是对象）
+    ![](https://gitee.com/Hami-Lemon/image-repo/raw/master/images/2021/05/25/20210525113725.png)
+
+- 内存划分
+    ![](https://gitee.com/Hami-Lemon/image-repo/raw/master/images/2021/05/25/20210525113736.png)
+## 权限修饰符
+private和protected不能用于修饰类
+![](https://gitee.com/Hami-Lemon/image-repo/raw/master/images/2021/05/25/20210525113741.png)
+
+## Scanner类
+对输入流进行读取操作
+```JAVA
+Scanner sc = new Scanner(System.in);
+
+```
+`nextInt();`获取一个数字
+`next();`获取一行字符串
+##　Random类
+
+java.util.Randm
+
+## 集合
+### ArrayList
+长度可改变
+泛型只能时引用类型
+`ArrayList<String> list = new ArrayList<>();`
+- 成员
+    boolean add(E e) 添加元素，返回是否添加成功
+    E get(int index) 获取元素
+    E remove(int index) 删除元素，返回删除的元素   
+    int size() 获取集合长度
+
+- 保存基本类型
+    使用基本类型的包装类
+    byte    Byte
+    short   Short
+    int     Interger
+    long    Long
+    float   Float
+    double  Double
+    char    Character
+    boolean Boolean
+    `ArrayList<Interger> list = new ArrayList<>();`
+## 字符串
+String
+所有的双引号字符串对视string类对象(就算没有new)
+字符串是常量，内容不可变，所以字符串是可以共享使用的
+字符串效果上相当于是char[] 的字符数组，但底层原理是byte[]
+
+创建方式：
+1. `String str = new String();` 空字符串
+1. `String str = new String(char[] char);` 根据字符数组，创建
+1. `String str = new String(byte[] byte);` 根据字节数组创建
+1. `String str = "";` 直接创建
+
+双引号的字符串储存在常量池中
+![](https://gitee.com/Hami-Lemon/image-repo/raw/master/images/2021/05/25/20210525113747.png)
+
+- 成员
+    boolean equals(Object obj); 判断是否与当前字符串内容相同，返回true或false（推荐写成"abc".equals(str))
+    int length(); 获取字符串长度
+    String concat（String str); 将当前字符串与参数字符串拼接，返回新的字符串
+    char charAt(int index); 获取指定索引的字符
+    int indexOf(String str); 查找参数字符串在当前字符串中的索引（第一次出现）
+     String substring(int index); 从参数位置截取字符串
+     String substring(int begin, int end); 截取begin到end的字符串，取左不取右
+     char[] toCharArray(); 将字符串转为char数组
+     byte[] toBytes[]; 转为字节数组
+     String replace(CharSequence, oldString, CharSequence newString); 将老字符串替换为新字符串(CharSequence是一个接口)
+     String[] split(String regex); 字符串切割（参数是一个正则表达式）
+
+## 静态
+- 内存图
+![](https://gitee.com/Hami-Lemon/image-repo/raw/master/images/2021/05/25/20210525113752.png)
+
+- 静态代码块
+第一次用到本类时，执行一次，以后不再执行，并且比构造方法先执行
+用来一次性对静态代码块赋值
+```JAVA
+class demo{
+    static{
+        ...;
+        ...;
+    }
+}
+```
+
+## Arrays类
+数组工具类
+- 成员
+    static String toString(数组); 数组变成字符串
+    static void sort(数组); 按照升序进行排序（如果是自定义的类型，那么这个类需要有Comparable或者Compartor接口）
+
+## 继承
+extends
+特点：子类可以拥有父类的内容
+子类可以拥有自己的特有内容
+
+访问成员属性：
+1. 直接通过子类对象访问属性
+左边是什么就用哪里面的，如果没有就找父类中的
+2. 通过成员方法间接访问
+访问的方法属于谁就使用谁里面的成员，没有则向上找
+- 方法重写（override)
+    方法的名称一样，参数列表也一样，会覆盖，子类方法的放回值必须小于等于父类方法返回值的范围
+    子类方法的权限修饰符必须大于等于父类方法的权限
+    > public > protected > (default) > private 
+    - 方法重载(overload)
+    方法的名称以一个，参数列表不同，不会覆盖
+
+- super用法
+    1. 在子类的成员方法中，访问父类的的成员变量
+    2. 在子类的成员方法中，访问父类的成员方法
+    3. 在子类的构造方法中，访问父类的构造方法（只能是第一个）
+    ```JAVA
+    super();//访问父类构造方法
+    super.method();//访问父类方法
+    super.num;//访问父类变量
+    ```
+- this用法
+    1. 在本类成员方法中，访问本类的成员变量
+    2. 在本类成员方法中，访问本类的另一个成员方法
+    3. 在本类的构造方法中，访问本类的另一个构造方法（必须是第一个语句，不能和super()同时使用）
+    ```JAVA
+    this.num;
+    this.method();
+    this(n);//可以在构造方法中访问另一个构造方法
+    ```
+- 内存图
+![](https://gitee.com/Hami-Lemon/image-repo/raw/master/images/2021/05/25/20210525113804.png)
+- 注意
+1. 单继承,一个类只能有一个父类
+2. 可以多级继承（java.lang.object是继承树的最高类）
+3. 一个父类可以有多个子类
+![](https://gitee.com/Hami-Lemon/image-repo/raw/master/images/2021/05/25/20210525113819.png)
+## 抽象
+继承树逐渐向上抽取，方法变得抽象，只定义具有的方法，但不实现，具体实现由子类继承并实现
+(抽象方法所在的类必须是抽象类)
+- 定义
+```JAVA
+public abstract class demo{
+    public abstract void eat();
+}
+```
+- 使用
+1. 不能直接创建抽象类，必须使用子类继承，并且实现抽像方法
+2. 创建子类对象进行使用
+- 注意
+1. 抽象类不能直接创建对象
+2. 抽象类中，可以有构造方法，共子类创建父类时初始化父类成员
+3. 抽象类中，不一定包含抽象方法，当包含抽象方法的类一定是抽象类
+4. 抽象类的子类，必须重写父类的所有方法，除非子类也是抽象类
+## 接口
+接口是一种公共的规范标准
+当一个抽象类全是抽象方法时，可以成为一个接口
+- 定义
+```JAVA
+public interface demo{
+    /*
+    可以包含常量，抽象方法，默认方法，静态方法，私有方法    
+    */
+    // 抽象方法
+    void method();//修饰符必须是public abstract,可以省略
+
+    //默认方法,用于接口升级(必须是public修饰)
+    /*接口出现新方法时，不需要实现类再次重写
+    可以被实现类直接调用，也可以被重写
+    */
+    default void method(){
+        //方法体
+    }
+
+    //静态方法（public 修饰）
+    /*
+    直接通过 接口名称.方法名称 进行调用
+    不能通过接口实现类的对象来调用静态方法
+    */
+    static void method(){
+        //方法体
+    }
+
+    //私有方法
+    /*
+    解决代码重复，且不对外暴露
+    */
+    private void method(){
+        //供默认方法使用
+    }
+    private static void method(){
+        //供静态方法使用
+    }
+
+    //常量定义，可以定义成员变量，但必须时常量
+     int numt = 10; //自动被public static final修饰
+     //必须进行赋值
+    //名称使用全大写，并且用下划线分割例：NUM_OF_CLASS
+}
+```
+
+- 使用
+接口不能直接使用，必须用一个类实现
+```JAVA
+public class demo implements inter{
+    ...;
+}
+```
+
+- 注意事项
+    1. 没有静态代码块和构造方法
+    2. 一个类可以同时实现多个接口
+    3. 如果实现类存在重名方法，只需要实现一个方法
+    4. 如果实现类存在重复的默认方法，那么实现类要对冲突的默认方法进行覆盖重写
+    5. 如果一个类中的父类方法和接口中的方法重复，会优先使用父类方法
+- 接口之间多继承
+    1. 接口可以多继承其它接口
+    2. 多个父接口中的抽象方法重复，没关系
+    3. 多个父接口的默认方法重复必须覆盖重写，而且要到default关键字
+
+## 多态
+建立在继承和实现基础上，使一个对象拥有多种形态
+格式：父类名 对象名 = new 子类名();
+    接口名 对象名 = new 实现类();
+- 访问成员方法
+new的是谁就使用谁，没有则向上找（编译看左边，运行看右边）
+- 访问成员属性
+类似于继承，编译看左边，运行看右边
+- 转型
+    1. 向上转型
+    父类名 对象名 = new 子类名();    
+    将子类作为父类看待(自动转型)
+    不能通过父类使用子类特有方法
+    2. 向下转型
+    子类名称 对象 = （子类名）父类对象;
+    将父类对象还原为子类对象，只能还原为创建父类时newe的对象
+    ```JAVA
+    Animal animal = new Cat();
+    Cat cat = (Cat)animal;
+    Dog dog = (Dog)animal;//错误
+    ```
+- instanceof
+通过instanceof判断父类对象的实际类型
+格式:对象 instanceof 类名称
+## final
+- 修饰类
+`public final class demo{}`
+不能有子类，但可以有父类
+- 修饰方法
+`public final void demo(){}`
+方法不能被覆盖
+- 修饰局部变量
+`final int num = 10;`
+只能赋值一次，变量成为常量
+- 修饰成员变量
+必须手动直接赋值或者通过构造函数赋值
+## 权限修饰符
+|   |public|protected|(default)|private
+:-:|:-:|:-:|:-:|:-:
+同一个类(我自己)|yes|yes|yes|yes|
+同一个包(我邻居)|yes|yes|yes|no|
+不同包子类(我儿子)|yes|yes|no|no|
+不同包非子类(陌生人)|yes|no|no|no|
+
+定义一个类时，权限修饰符规则
+1. 外部类：public / (default)
+2. 成员内部类：全部
+3. 局部内部类：什么都不能写,并且和(default)含义不同
+# Object类
+`getClass()`：获取调用类的实际类型
+`hashCode()`: 获取调用类的哈希码值
+`toString()`: 获取调用类的名称和哈希码，即该类的字符串表现形式
+`equals()`:比较两个对象的地址是否相同
+# 内部类
+一个事物的内部包含另一个事物
+在一个类的内部定义一个类，与其它成员同级别
+内部类不能定义静态成员，可以将内部类定义为静态
+当内部类访问外部类的成员时，jdk会自动将那个成员修饰为final，以保障生命周期相同
+
+```JAVA
+public class outer{
+    public class inner{
+
+    }
+}
+```
+- 使用
+```JAVA
+//间接方式
+在外部类中的方法中，使用内部类，然后调用该方法
+//直接方式
+Outer.Inner name = new Outer().new Inner();
+```
+- 重名
+重名时，内部类访问外部类成员
+`外部类名称.this.成员名`
+- 局部内部类
+一个类定义在一个方法内部,只有当前所在的方法能够使用
+当局部内部类访问方法中的局部变量时，jdk会自动将那个成员修饰为final，以保障生命周期相同
+
+```JAVA
+class Outer{
+    void demo(){
+        class Inner{
+
+        }
+    }
+}
+```
+- 匿名内部类
+没有类名的局部内部类
+必须继承一个父类或实现一个接口，实现定义类、实现类、创建对象的语法合并，
+只能创建一个该类的对象
+```JAVA
+new Object(){//Object为继承的父类，或实现的接口
+    xxxx;
+};
+```
+## 时间与日期
+- java.util.Data
+    - 构造方法
+    `Data();`获取当前系统的日期和时间
+    `Data(long data)`将毫秒值转为时间和日期
+    - 成员方法
+    long getTime();返回data类对应的毫秒值
+- DataFormat
+  格式化，解析日期
+  这是一个抽象类，使用SimpleDataFormat
+  ![](https://gitee.com/Hami-Lemon/image-repo/raw/master/images/2021/05/25/20210525113832.png)
+  
+    - 构造方法
+        `SimpleDataFormat(String pattern)`使用指定的模式构造
+    - 使用
+  
+    ```JAVA
+    SimpleDataFormat sdf = new SimpleDataFormat("yyy-MM-dd HH:mm:ss");
+    Data data = new Data();
+    sdf.format(data);//格式化
+    data = sdf.parse("2016-01-02 12:12:12");//解析，会抛出ParseException异常
+    ```
+- Calendar
+是一个抽象类，使用静态方法`getInstance()`获取对象
+- 常用方法
+`int get(int field)`:返回给定的字段代表的值，参数：日历类的字段，可以使用Calendar的静态成员获取
+`void set(int field, int value)`给指定字段设置一个指定值
+`void add(int field, int amount)`将指定的字段增加或减少
+`Data getTime()`将Calendar对象转为Data对象
+## System类
+`long cruuentTimeMillis()`返回当前系统时间的毫秒值
+`void arraycopy(Object src, int srcPos, Object dest, int destPos,int length)`将数组中指定的数据复制到另一个数组中
+## StringBuider
+字符串缓冲区
+- 构造方法
+`StringBuilder()`构造一个空的字符串生成器，默认长度为16个字符
+`StringBuilder(String str)`
+- 成员方法
+`StringBuilder append(...)`添加任意类型数据的字符串形式，
+`String toString()`转为字符串
+## 包装类
+基本类型的引用类型
+- 装箱
+把基本类型的数据，包装到包装类中
+`static Integer valueof(int num);`参数也可是字符串
+- 拆箱
+在包装类中取出基本类型的数据
+`int intValue()`
+- 自动拆箱与装箱
+可以自动转换，无需调用方法
+```JAVA
+Integer in = 1;//自动装箱
+in = in + 2;//自动拆箱
+```
+- 基本类型转字符串
+    1. 基本类型+""
+    2. 包装类的静态方法`toString(...)`
+    3. String类的静态方法`valueof(...)`
+- 字符串转基本类型
+    1. 包装类的静态方法`parseXXX("...")`
+## 集合框架(Collection)
+![](https://gitee.com/Hami-Lemon/image-repo/raw/master/images/2021/05/25/20210525113839.png)
+- 共性方法
+![](/images/JAVA/jihefunc.png)
+ - Iterator迭代器
+ 用于遍历集合
+     是一个接口，使用Collection类中的`iterator()`获取迭代器对象
+    - 使用
+    `E next()`获取下一个元素
+    `boolean hasNext()`是否还有元素
+
+    ```JAVA
+    Collection<String> coll = new ArrayList<>();
+    coll.add("...");
+    Iterator<String> it = coll.iterator();//获取迭代器对象
+    while(it.hasNext()){
+        System.out.println(it.next());
+    }
+    ```
+    - 增强for循环(底层是迭代器)
+    可以遍历集合和数组
+
+    ```JAVA
+    int[] arr = {1, 2, 3};
+    for(int i : arr){
+        System.out.println(i);
+    }
+    ```
+## 泛型
+用于编译时检查数据类型是否正确,把运行期异常提升到编译期
+类，方法，接口都可以使用泛型
+默认为Object
+```JAVA
+ArrayList<String> list = new ArrayList<>();
+```
+- 自定义泛型类
+```JAVA
+public class Demo<E>{
+    ...
+}
+```
+- 自定义泛型方法
+```JAVA
+public <M> void method(M m){
+    ...
+}
+
+//调用
+method(1);
+method("a");
+```
+- 自定义泛型接口
+```JAVA
+public interface demo<I>{
+    ...
+}
+
+//使用
+//方式一
+class d implements demo<String>{
+    ...
+}
+//方式二
+//创建对象时确定泛型
+class d<I> implements demo<I>{
+    ...
+}
+```
+- 泛型通配符
+`?`代表任意的数据类型
+不能创建对象时使用，只能作为方法的参数使用
+```JAVA
+ArrayList<Interger> list = new ArrayList<>();
+list.add(...);
+
+public void printList(ArrayList<?> list){
+    //使用迭代器取出的元素是Object
+}
+```
+- 泛型受限
+    - 上限限定
+    `<? extends E>`泛型只能是E的子类或本身
+    - 下限限定
+    `<? super E>`泛型只能是E的父类或本身
+## List集合
+有序的集合，每个元素有索引，允许有重复的元素
+- 常用方法
+`void add(int index, E element)`添加
+`E get(int index)`获取
+`E remove(int index)`删除
+`E set(int index, e element)`替换
+- ArrayList
+大小可变的数组
+- LinkedList
+一个双向链表
+- Vector
+同步的，长度可变数组
+## Set集合
+不能包含重复元素，没有索引
+- HashSet
+是一个无序集合，底层是一个哈希表，查询速度快
+![](https://gitee.com/Hami-Lemon/image-repo/raw/master/images/2021/05/25/20210525113847.png)
+存储自定义的类型元素，必须重写hashCode()和equals(),以达到数据不重复（编译器自动生成代码)
+- LinkedHashSet
+多了一条链表记录元素的存储顺序，保证元素有序
+## 可变参数
+当方法的参数列表的类型已经确定，但参数的个数不确定
+只能有一个可变参数，并且写在最后
+`public void demo(int... name)`
+等价于`public void demo(int[] name)`(但是传参的方式不同)
+特殊写法`public void demo(Object...obj)`
+底层是一个数组，个数可以是任意个
+```JAVA
+public static void main(String[] args) {
+        int r = add(1,3, 4);
+    }
+private static int add(int...a){
+    int sum = 0;
+    for (int i : a) {
+        sum += i;
+    }
+    return sum;
+}
+```
