@@ -16,7 +16,7 @@
 
 ### 记录更新到仓库
 
-![文件状态变化](images/2-git%E5%9F%BA%E7%A1%80/image-20210511091520522.png)
+![文件状态变化](https://gitee.com/Hami-Lemon/image-repo/raw/master/images/2021/05/25/20210525112714.png)
 
 ### 检查当前文件状态
 
@@ -33,7 +33,7 @@ git status
 
 使用`git status -s`
 
-![image-20210511095357695](images/2-git%E5%9F%BA%E7%A1%80/image-20210511095357695.png)
+![image-20210511095357695](https://gitee.com/Hami-Lemon/image-repo/raw/master/images/2021/05/25/20210525112717.png)
 
 新添加的文件用`??`标记，新添加到暂存区中的文件前有`A`标记，修改过的文件用`M`标记。输出有两栏，左栏指明了暂存区的状态，右栏指明了工作区的状态。
 
@@ -134,7 +134,7 @@ doc/**/*.pdf
 
 `git log --pretty=format:"%h"`:自定义格式
 
-![format常用选项](images/2-git%E5%9F%BA%E7%A1%80/image-20210511124124817.png)
+![format常用选项](https://gitee.com/Hami-Lemon/image-repo/raw/master/images/2021/05/25/20210525112649.png)
 
 `git log --pretty=format:"%h" --graph`:以图形方式显示
 
