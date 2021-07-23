@@ -47,7 +47,7 @@
 
   - nextWaiter
 
-    指向下一个在条件（condition）队列中的结点，或者为`SHARED`，因为只有在独占模式下才会使用。
+    指向下一个在条件（condition）队列中的结点，为`SHARED`或`EXCLUSIVE`时，表时当前结点是在阻塞队列中。
 
 - head
 
@@ -61,7 +61,7 @@
 
 - SIGNAL(-1) : 当前结点的后继结点处于阻塞状态，当前结点必须在释放资源或被取消后唤醒后继结点。
 - CANCELLED(1)：结点因超时或中断而被取消，进入该状态的结点不会再转换为其它状态。
-- CONDITION(-2)：表明该结点处于一个条件（condition)队列中，在被转换之前它将不会被作为一个同步队列中的结点被使用。
+- CONDITION(-2)：表明该结点处于条件（condition)队列中，在被转换之前它将不会被作为阻塞队列中的结点被使用，即不会获取到锁。
 - PROPAGATE(-3)：在共享模式下，当该结点被释放后，不仅会唤醒后继结点，还会将唤醒操作传播下去。
 - 0：新结点入队时的默认值。
 
@@ -75,6 +75,7 @@
   public final void acquire(int arg) {
       //tryAcquire表示尝试获取资源，具体方法由子类实现。
           if (!tryAcquire(arg) &&
+              //该方法会返回线程是否被中断，如 
               acquireQueued(addWaiter(Node.EXCLUSIVE), arg))
               selfInterrupt();
   }

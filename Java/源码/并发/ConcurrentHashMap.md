@@ -1,0 +1,3 @@
+# ConcurrentHashMap
+
+HashMap是一个线程不安全的容器，在多线程情况下会在扩容时出现环形链表而导致死循环，而ConcurrentHashMap则是线程安全的。
