@@ -4,14 +4,14 @@
 
 ## 目录
 
-- [CMAKE](tree/master/cmake)
-- [Git](tree/master/git)
-- [Java](tree/master/Java)
-- [数据库](tree/master/SQL)
-- [汇编](tree/master/汇编)
-- [Vim](tree/master/vim)
-- [计算机图形学](tree/master/计算机图形学)
-- [设计模式](tree/master/设计模式)
-- [算法](tree/master/算法)
-- [五笔](tree/master/五笔)
+- [CMAKE](cmake)
+- [Git](git)
+- [Java](Java)
+- [数据库](SQL)
+- [汇编](汇编)
+- [Vim](vim)
+- [计算机图形学](计算机图形学)
+- [设计模式](设计模式)
+- [算法](算法)
+- [五笔](五笔)
 
