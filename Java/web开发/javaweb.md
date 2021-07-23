@@ -4,8 +4,6 @@
 
 通过java语言编写,可以通过浏览器访问的程序(基于请求和响应开发)
 
-<!--more-->
-
 ## xml
 
 用来传输和存储数据
@@ -13,7 +11,7 @@
 ```xml
 <?xml version="1.0" encoding="utf-8" ?>
 <books>
-    <book sn="ss>
+    <book sn="ss">
         <name>时间简史</name>
     </book>
 </books>
@@ -26,9 +24,9 @@
 1. dtd:简单的约束技术
 2. schema:复杂的约束技术
 
-### 解析
+### 解析XML
 
-dom4j
+[dom4j](https://dom4j.github.io/)
 
 ```java
 //1. 创建一个saxReader，去读取xml文件
@@ -61,7 +59,7 @@ for(Element book : rootElement.elements("book")){
 </mirror>
 ```
 
-1. 本地仓库
+2. 本地仓库
 
 ```xml
 <localRepository>xxx</localRepository>
@@ -326,7 +324,7 @@ ServletContext在web服务器启动时创建,服务器关闭时销毁
   servletContext.removeAttribute("s");//移除数据
   ```
 
-### 过滤器
+## 过滤器
 
 ![过滤器](https://gitee.com/Hami-Lemon/image-repo/raw/master/images/2021/05/25/20210525115000.png)
 可以通过filter对web服务器管理的所有资源进行拦截
@@ -371,7 +369,7 @@ public class HelloFilter implements Filter {
 </filter-mapping>
 ```
 
-1. 注解
-过滤器类上使用`@WebFilter`  
+2. 注解
+   过滤器类上使用`@WebFilter`  
 
 优先级:web.xml优先级最高,注解配置的按照类名顺序  

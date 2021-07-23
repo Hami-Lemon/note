@@ -1,21 +1,24 @@
-Spring是分层的java全栈是的轻量级开源框架，以IOC(控制反转)和AOP(面向切面编程)为内核，提供了展现层SpringMVC和持久层Sprng JDBC以及业务层事务管理等众多的企业级应用技术
-<!--more-->
+# Spring Core
+
+Spring是分层的java全栈是的轻量级开源框架，以IOC(控制反转)和AOP(面向切面编程)为内核，提供了展现层SpringMVC和持久层Sprng JDBC以及业务层事务管理等众多的企业级应用技术。
 
 ## 体系结构
-
-spring体系结构
 
 ![1](https://gitee.com/Hami-Lemon/image-repo/raw/master/images/2021/05/25/20210525115142.png)
 
 ## IOC(控制反转)
 
-把对象创建的权力交给框架,可以削减程序的耦合
+把对象创建的权力交给框架,可以削减程序的耦合。
 
-使用new创建对象
-![2](https://gitee.com/Hami-Lemon/image-repo/raw/master/images/2021/05/25/20210525115147.png)
+在传统的开以方式中，创建一个对象最直接的方式是使用`new`关键字，并且在创建这个对象时，可能这个对象又依赖于其它对象，为了能够将其创建出来还需要解决其中的依赖关系，而使用Spring容器，则是将对象的创建交给容器去解决，同样的依赖关系也将由容器去解决，从而实现控制反转。
 
-使用工厂创建对象
-![3](https://gitee.com/Hami-Lemon/image-repo/raw/master/images/2021/05/25/20210525115151.png)
+但Ioc（Inversion of Control）并不能让人更加直观和清晰地理解其背后所代表的含义，于Martin Fowler创造了一个新词 —— 依赖注入（Dependency Injection, DI）。
+
+- 使用new创建对象
+  ![2](https://gitee.com/Hami-Lemon/image-repo/raw/master/images/2021/05/25/20210525115147.png)
+
+- 使用工厂创建对象
+  ![3](https://gitee.com/Hami-Lemon/image-repo/raw/master/images/2021/05/25/20210525115151.png)
 
 ### spring中的IOC
 
@@ -56,38 +59,41 @@ IUserDao ud = ac.getBean("userDao",IUserDao.class);
 - 创建bean的三种方式
     1. 使用默认构造函数,配置文件中使用bean标签,只有id和class属性
 
-    ```xml
-     <bean id="userService" class="com.hamilemon.service.impl.IUserServiceImpl"/>
-    ```
+       ```xml
+       <bean id="userService" class="com.hamilemon.service.impl.IUserServiceImpl"/>
+       ```
 
-    1. 使用工厂类中的方法创建对象,并存入spring容器
+    2. 使用工厂类中的方法创建对象,并存入spring容器
 
-    ```xml
-    使用instanceFactory工厂创建userService对象
-    <bean id="instanceFactory" class="xxx"/>
-    <bean id="userService" factory-bean="instanceFactory" factory-method="getUserService/>
-    ```
+       ```xml
+       <!--使用instanceFactory工厂创建userService对象-->
+       <bean id="instanceFactory" class="xxx"/>
+       <bean id="userService" factory-bean="instanceFactory" factory-method="getUserService/>
+       ```
 
-    1. 使用静态工厂中的静态方法创建对象,并存入spring容器
+    3. 使用静态工厂中的静态方法创建对象,并存入spring容器
 
-    ```xml
-    <bean id="userService" class="com.hamilemon.factory.StaticFactory"
-    factory-method="getUserService">
-    ```
+       ```xml
+       <bean id="userService" class="com.hamilemon.factory.StaticFactory"
+       factory-method="getUserService">
+       ```
 
 - bean的作用范围
-spring创建的bean对象默认为单例
-使用scope指定bean的作用范围
+spring创建的bean对象默认为单例，使用scope指定bean的作用范围
 
 1. singleton:单例(默认值)
-2. prototype:多例
+
+2. prototype:多例，每次获取时都会创建一个新对象
+
 3. request:作用于web应用的请求返回
+
 4. session:作用web应用的作用返回
+
 5. global-session: 作用集群环境的会话范围
 
-```xml
-<bean id="xxx" class="xxx" scope="singleton"/>
-```
+   ```xml
+   <bean id="xxx" class="xxx" scope="singleton"/>
+   ```
 
 - bean对象生命周期
     1. 单例对象
@@ -98,27 +104,33 @@ spring创建的bean对象默认为单例
     init-method="xxx" destroy-method="xxx"/>
     ```
 
-    1. 多例对象
-    使用对象时才创建,由GC回收
+    2. 多例对象
+       使用对象时才创建,由GC回收
 
 ### 依赖注入
 
-依赖关系都交给spring来维护,在当前类需要用到其它类的对象,由spring提供,只需要在配置文件中说明即可
+依赖关系都交给spring来维护,在当前类需要用到其它类的对象,由spring提供,只需要在配置文件中说明即可，依赖关系的维护称为依赖注入。
 
-依赖关系的维护称为依赖注入
+#### 能注入的数据
 
-能注入的数据:
-    - 基本类型和String
-    - 其它bean类型(配置文件中或者注解配置过的bean)
-    - 复杂类型/集合类型
+- 基本类型和String
 
-- 使用构造函数注入
-bean中使用constructor-arg
-属性：
+- 其它bean类型(配置文件中或者注解配置过的bean)
+
+- 复杂类型/集合类型
+
+#### 使用构造函数注入
+
+  bean中使用constructor-arg
+
 - type：指定要注入的数据的数据类型
+
 - index:指定要注入的数据给构造函数中指定索引位置的参数赋值（0开始）
+
 - name: 指定给构造函数中指定名称的参数赋值
+
 - ref:用于指定其它的bean类型
+
 - value:提供基本类型和String
 
 ```xml
@@ -130,9 +142,10 @@ bean中使用constructor-arg
 <bean id="now" class="java.util.Date"/>
 ```
 
-- set方法注入
+#### set方法注入
+
 bean中使用property标签
-属性:
+
 - name: 注入时所调用的set方法名
 - ref:用于指定其它的bean类型
 - value:提供基本类型和String
@@ -147,7 +160,8 @@ bean中使用property标签
 </bean>
 ```
 
-- 复杂类型注入
+#### 复杂类型注入
+
 用于给list注入的标签:`list` `array` `set`
 用于给map注入的标签: `map` `props`
 
@@ -179,8 +193,6 @@ bean中使用property标签
 ```
 
 ### 基于注解的IOC
-
-添加配置
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -274,37 +286,36 @@ ApplicationContext ac =
 new AnnotationConfigApplicationContext(SpringConfiguration.class);
 ```
 
-获取spring的IOC容器
+- `@Import`:用于导入其它配置类
+  属性:value:用于指定其它配置类的字节码
+  `@Import(JdbcConfig.class)`
 
-`@Import`:用于导入其它配置类
-属性:value:用于指定其它配置类的字节码
-`@Import(JdbcConfig.class)`
-
-`@PropertySource`:指定配置文件的位置
-在使用的地方用`@Value(${key})`的方式注入
-属性:value:指定文件的名称和路径,关键字`classpath`表示在类路径下
-`@PropertySource("classpath:jdbcConfig.properties")`
-`@PropertySources`:指定多个
+- `@PropertySource`:指定配置文件的位置
+  在使用的地方用`@Value(${key})`的方式注入
+  属性:value:指定文件的名称和路径,关键字`classpath`表示在类路径下
+  `@PropertySource("classpath:jdbcConfig.properties")`
+  `@PropertySources`:指定多个
 
 ### spring整合junit
 
 1. 添加spring整合junit的依赖
 
-```xml
-<dependency>
-    <groupId>org.springframework</groupId>
-    <artifactId>spring-test</artifactId>
-    <version>5.2.5.RELEASE</version>
-</dependency>
-```
+   ```xml
+   <dependency>
+       <groupId>org.springframework</groupId>
+       <artifactId>spring-test</artifactId>
+       <version>5.2.5.RELEASE</version>
+   </dependency>
+   ```
 
-1. 使用`@Runwith(SpringJUnit4ClassRunner.class)`把原本的main方法替换成sprig提供的
+2. 使用`@Runwith(SpringJUnit4ClassRunner.class)`把原本的main方法替换成sprig提供的
 
-1. 告知spring运行器,spring和ioc创建是xml还是注解
+3. 告知spring运行器,spring和ioc创建是xml还是注解
    `@ContextConfiguration`
    属性:locations:指定xml的位置,加上classpath,表示在类路径下
     classes:注解类的位置
-1. 需要spring提供的对象上添加`@Autowired`自动注入
+
+4. 需要spring提供的对象上添加`@Autowired`自动注入
 
 ## AOP面向切面编程
 
@@ -313,16 +324,13 @@ new AnnotationConfigApplicationContext(SpringConfiguration.class);
 字节码随用随创建，随用随加载，不修改源码的基础上对方法增强
 
 - 基于接口的动态代理
-    使用`Proxy`对象中的`newProxyInstance`方法
-    要求:被代理类最少实现一个接口
-    `newProxyInstance`参数:
-        `ClassLoader`:类加载器,用于在家代理对象的字节码,传入被代理对象的类加载器
-        `被代理类.getClass().getClassLoader()`
-        `Class[]`:字节码数组,用于让代理对象和被代理对象有相同方法,
-            传入`被代理类.getClass().getInterfaces()`
-        `InvocationHandler`:用于提供增强的代码,让我们写如何代理.
-            一般传入一个该接口的实现类
-
+    使用`Proxy`对象中的`newProxyInstance`方法。
+    
+    - 方法参数:
+          1. `ClassLoader`:类加载器,用于在家代理对象的字节码,传入被代理对象的类加载器 `被代理类.getClass().getClassLoader()`
+             2. `Class[]`:字节码数组,用于让代理对象和被代理对象有相同方法, 传入`被代理类.getClass().getInterfaces()`
+             3. `InvocationHandler`:用于提供增强的代码,让我们写如何代理， 一般传入一个该接口的实现类
+    
     ```java
     Proxy.newProxyInstance(producer.getClass().getClassLoader(),
         producer.getClass().getInterfaces(),
@@ -350,22 +358,25 @@ new AnnotationConfigApplicationContext(SpringConfiguration.class);
             }
         });
     ```
-
+    
 - 基于子类的动态代理
-添加依赖
 
-```xml
-<dependency>
-    <groupId>cglib</groupId>
-    <artifactId>cglib</artifactId>
-    <version></version>
-</dependency>
-```
+  使用[cglib](https://blog.csdn.net/danchu/article/details/70238002)实现
 
-使用`cglib`库的`Enhancer`中的`create`方法
-要求:被代理类不能时最终类
-方法参数:Class:字节码,指定被代理对象的字节码
-    Callback:用于提供增强的代码,一般传入MethodInterceptor的实现类
+  ```xml
+  <dependency>
+      <groupId>cglib</groupId>
+      <artifactId>cglib</artifactId>
+      <version></version>
+  </dependency>
+  ```
+
+  使用`cglib`库的`Enhancer`中的`create`方法，要求:被代理类不能时最终类（非final）
+
+  方法参数:
+
+  	1. Class:字节码,指定被代理对象的字节码
+   	2. Callback:用于提供增强的代码,一般传入MethodInterceptor的实现类
 
 ```java
 Enhancer.create(producer.getClass, new MethodInterceptor(){
@@ -547,7 +558,7 @@ public class Logger {
 }
 ```
 
-### spring中的jdbcTemplate
+## spring中的jdbcTemplate
 
 用于和数据库交互，实现对表的crud操作
 
@@ -580,57 +591,57 @@ spring的事务控制都是基于AOP的,既可以使用编程的方式实现,也
 
 1. 配置事务管理器
 
-```xml
-<bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
-        <property name="dataSource" ref="dataSource"/>
-</bean>
-```
+   ```xml
+   <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+           <property name="dataSource" ref="dataSource"/>
+   </bean>
+   ```
 
-1. 导入事务的约束,配置事务通知
+2. 导入事务的约束,配置事务通知
 
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<beans xmlns="http://www.springframework.org/schema/beans"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xmlns:aop="http://www.springframework.org/schema/aop"
-    xmlns:tx="http://www.springframework.org/schema/tx"
-    xsi:schemaLocation="
-        http://www.springframework.org/schema/beans
-        https://www.springframework.org/schema/beans/spring-beans.xsd
-        http://www.springframework.org/schema/tx
-        https://www.springframework.org/schema/tx/spring-tx.xsd
-        http://www.springframework.org/schema/aop
-        https://www.springframework.org/schema/aop/spring-aop.xsd">
+   ```xml
+   <?xml version="1.0" encoding="UTF-8"?>
+   <beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xsi:schemaLocation="
+           http://www.springframework.org/schema/beans
+           https://www.springframework.org/schema/beans/spring-beans.xsd
+           http://www.springframework.org/schema/tx
+           https://www.springframework.org/schema/tx/spring-tx.xsd
+           http://www.springframework.org/schema/aop
+           https://www.springframework.org/schema/aop/spring-aop.xsd">
+   <tx:advice id="txAdvice" transaction-manager="transactionManager"/>
+   ```
 
-```
+3. 配置AOP的切入点表达式
 
-`<tx:advice id="txAdvice" transaction-manager="transactionManager"/>`
+4. 建立切入点表达式和事务通知的对应关系
 
-1. 配置AOP的切入点表达式
-1. 建立切入点表达式和事务通知的对应关系
+   ```xml
+   <!--    配置aop-->
+   <!--    配置切入点表达式-->
+       <aop:config>
+           <aop:pointcut id="pt" expression="execution(* com.hamilemon.service.impl.*.*(..))"/>
+   <!--        建立切入点表达式和事务通知的对应关系-->
+           <aop:advisor advice-ref="txAdvice" pointcut-ref="pt"/>
+       </aop:config>
+   ```
 
-```xml
-<!--    配置aop-->
-<!--    配置切入点表达式-->
-    <aop:config>
-        <aop:pointcut id="pt" expression="execution(* com.hamilemon.service.impl.*.*(..))"/>
-<!--        建立切入点表达式和事务通知的对应关系-->
-        <aop:advisor advice-ref="txAdvice" pointcut-ref="pt"/>
-    </aop:config>
-```
-
-1. 配置事务的属性
+5. 配置事务的属性
    在`<tx:advice>`标签中
    `<tx:method>`中的属性:
-    - isolation:用于指定事务的隔离级别
-    - propagation:用于指定事务的传播行为,默认为REQUITRED,表示一定会有事务.
-    只有查询时可以选择SUPPORTS
-    - read-only:用于指定事务是否只读.只有查询方法时才能设置为true
-    - timeout:用于指定事务的超时时间.默认为-1,表示永不超时(以秒为单位)
-    - rollback-for:用于指定一个异常,当产生该异常时,事务回滚;产生其它异常,不会滚
-    没有默认值,表示任何异常都回滚
-    - no-rollback-for:用于指定一个异常,当产生时,事务不回滚;
-    没有默认值,表示任何异常都回滚
+
+ - isolation:用于指定事务的隔离级别
+ - propagation:用于指定事务的传播行为,默认为REQUITRED,表示一定会有事务.
+ 只有查询时可以选择SUPPORTS
+ - read-only:用于指定事务是否只读.只有查询方法时才能设置为true
+ - timeout:用于指定事务的超时时间.默认为-1,表示永不超时(以秒为单位)
+ - rollback-for:用于指定一个异常,当产生该异常时,事务回滚;产生其它异常,不会滚
+ 没有默认值,表示任何异常都回滚
+ - no-rollback-for:用于指定一个异常,当产生时,事务不回滚;
+ 没有默认值,表示任何异常都回滚
 
 ```xml
 <!--配置事务属性-->
