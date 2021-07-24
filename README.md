@@ -4,13 +4,13 @@
 
 ## 目录
 
-- [CMAKE](cmake)
-- [Git](git)
-- [Java](Java)
-- [数据库](SQL)
-- [汇编](汇编)
-- [计算机图形学](计算机图形学)
-- [设计模式](设计模式)
-- [算法](算法)
-- [五笔](五笔)
+- [CMAKE](cmake/README.md)
+- [Git](git/README.md)
+- [Java](Java/README.md)
+- [数据库](SQL/README.md)
+- [汇编](汇编/README.md)
+- [计算机图形学](计算机图形学/README.md)
+- [设计模式](设计模式/README.md)
+- [算法](算法/README.md)
+- [五笔](五笔/README.md)
 
