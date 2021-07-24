@@ -263,9 +263,7 @@ response.addCookie(cookie);
 
 #### 服务器状态管理:将状态保存在服务器端(session)
 
-session用于跟踪客户端的状态,session值的是在一段时间内,单个客户与web服务器的一连串交互过程  
-session被用于表示一个持续的连接状态,在网站访问中一般自带客户端浏览器的进程从开始到结束的过程  
-实现机制是当用户发起一个请求的时候,服务器会检查该请求中是否包含sessionid,如果未包含,则Tomcat会创造一个名为jsessionid的输出cookie返回给浏览器,当已经包含sessionid时,服务端会检查找到与该session相匹配的信息
+session用于跟踪客户端的状态,session值的是在一段时间内,单个客户与web服务器的一连串交互过程  session被用于表示一个持续的连接状态,在网站访问中一般自带客户端浏览器的进程从开始到结束的过程  实现机制是当用户发起一个请求的时候,服务器会检查该请求中是否包含sessionid,如果未包含,则Tomcat会创造一个名为jsessionid的输出cookie返回给浏览器,当已经包含sessionid时,服务端会检查找到与该session相匹配的信息
 
 ```java
 //获取session对象
@@ -290,9 +288,7 @@ session.invalidata();
 
 ### ServletContext
 
-servlet上下文,代表当前整个应用程序  
-当web服务器启动时,会为每个web应用程序创建一块共享存储区域  
-ServletContext在web服务器启动时创建,服务器关闭时销毁  
+servlet上下文,代表当前整个应用程序  当web服务器启动时,会为每个web应用程序创建一块共享存储区域 ServletContext在web服务器启动时创建,服务器关闭时销毁  
 
 #### 获取ServletContext
 
@@ -324,11 +320,10 @@ ServletContext在web服务器启动时创建,服务器关闭时销毁
   servletContext.removeAttribute("s");//移除数据
   ```
 
-## 过滤器
+## 过滤器（Filter）
 
 ![过滤器](https://gitee.com/Hami-Lemon/image-repo/raw/master/images/2021/05/25/20210525115000.png)
-可以通过filter对web服务器管理的所有资源进行拦截
-servlet中提供了一个Filter接口,实现这个接口的类称为过滤器
+可以通过filter对web服务器管理的所有资源进行拦截，servlet中提供了一个Filter接口,实现这个接口的类称为过滤器
 
 1. 实现Filter接口
 2. 实现doFilter方法
@@ -373,3 +368,58 @@ public class HelloFilter implements Filter {
    过滤器类上使用`@WebFilter`  
 
 优先级:web.xml优先级最高,注解配置的按照类名顺序  
+
+### filter链
+
+所有注册的filter会构造一条链，按照优先级依次调用（过滤响应时顺序相反），每一个filter需要调用`chain`的`doFilter`方法向后传递，以便后续filter继续处理，如不调用，则该请求不会被继续传递也就不会到达servlet。
+
+在`doFilter`方法前的代码在接受到请求时执行，而在其后的代码则在服务端响应时执行。
+
+![image-20210724100747394](https://gitee.com/Hami-Lemon/image-repo/raw/master/images/2021/07/24/20210724100747.png)
+
+## Listener
+
+监听器用于监听WEB应用中某些对象的创建、销毁、增加、修改、删除等动作的发生，然后作出相应的处理。当监听范围对象的状态发生变化时，服务器自动调用监听器中的方法。常用于统计网站在线人数、系统加载是进行信息初始化、统计网站的访问量等等。
+
+### 分类
+
+- 按监听的对象分
+  - ServletContext对象监听器
+  - HttpSession对象监听器
+  - ServertRequest对象监听器
+- 按监听的事件分
+  - 对象自身的创建与销毁监听器
+  - 对象中属性的创建和消除监听器
+  - session中的某个对象的状态变化监听器
+
+### 统计网站在线人数
+
+每当有一个访问连接到服务器时，都会创建一个session，所以可以统计session的数量来获得当前在线人数。使用`HttpSessionListener`
+
+```java
+//使用注解注册
+@WebListener
+public class HelloListener implements HttpSessionListener {
+    private int count;
+
+    @Override
+    public void sessionCreated(HttpSessionEvent se) {
+        count++;
+        se.getSession().setAttribute("count", count);
+    }
+
+    @Override
+    public void sessionDestroyed(HttpSessionEvent se) {
+        count--;
+        se.getSession().setAttribute("count", count);
+    }
+}
+```
+
+### 常用Listener
+
+1. `HttpSessionAttributeListener` 监听session中属性的增加，移除以及改变
+2. `ServletContextListener` 监听web上下文的初始化
+3. `ServletContextAttributeListener` 监听web上下文中属性的变化
+4. `ServletRequestListener`监听`request`的创建与销毁
+5. `ServletRequestAttributeListener`监听request的属性的增加、删除、属性值变化

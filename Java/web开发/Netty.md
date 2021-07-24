@@ -328,7 +328,7 @@ maven依赖
 - Reactor模式
 ![reacotr](https://gitee.com/Hami-Lemon/image-repo/raw/master/images/2021/05/25/20210525113016.png)
 
-### Netty创建TCP服务
+## Netty创建TCP服务
 
 ![netty](https://gitee.com/Hami-Lemon/image-repo/raw/master/images/2021/05/25/20210525113019.png)
 
@@ -486,7 +486,7 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
 }
 ```
 
-### 任务队列
+## 任务队列
 
 当在处理请求时,有一个非常耗时的业务,可以采用异步执行，将其提交到该`channel`对应的`NIOEventLoop`的`taskQueue`中
 
@@ -515,7 +515,7 @@ ctx.channel.eventLoop().schedule(new Runable(){
 
 - 非当前Reactor线程调用Channel的各种方法
 
-### 异步模型
+## 异步模型
 
 netty的IO操作时异步，通过`Future-Linstener`机制,方便用户可以主动获取或通过通知机制获得IO操作结果
 
@@ -531,7 +531,7 @@ ChannelFuture cf = bootstrap.bind(8888).sync();
             });
 ```
 
-### 核心模块
+## 核心模块
 
 - `Bootstrap`
   `Bootstrap`主要用于配置整个netty程序,串联各个组件,netty中`Bootstrap`类是客户端的启动引导类,`ServerBootstrap`是服务端的
@@ -611,7 +611,7 @@ public class HeartHandler extends ChannelInboundHandlerAdapter {
 }
 ```
 
-### Protobuf
+## Protobuf
 
 数据在网络传输中都是二进制数据，在发送时就需要编码(encode)，接收时需要解码(decode)  
 
@@ -755,7 +755,7 @@ protobuf编译器能自动生成代码,protobuf是将类的定义使用.proto文
         }
         ```
 
-### Netty编解码机制
+## Netty编解码机制
 
 ChannelPipeline提供了ChannelHandler链的容器,以客户端为例,事件运动方向是从客户端到服务端,这是出站,反之入站，出站对应写,入站对应读,出站要编码,入站要解码。
 
@@ -795,7 +795,7 @@ ChannelPipeline提供了ChannelHandler链的容器,以客户端为例,事件运�
   - `HttpObjectDecoder`http数据解码器
   - `LengthFieldBasdFrameDecoder`通过指定长度来标识整包消息
 
-### TCP粘包和拆包
+## TCP粘包和拆包
 
 发送端为例将多个发给接收端的包,更有效的发给对方,使用优化方法,将多个较小的数据包合并为一个较大的数据包发送,称为粘包
 ![粘包](https://gitee.com/Hami-Lemon/image-repo/raw/master/images/2021/05/25/20210525113102.png)
