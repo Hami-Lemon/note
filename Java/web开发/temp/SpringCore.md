@@ -22,7 +22,6 @@ IOC(控制反转)也被称为依赖注入，它是在一个对象的构造方法
     <bean id="..." class="...">  
         <!-- collaborators and configuration for this bean go here -->
     </bean>
-
     <bean id="..." class="...">
         <!-- collaborators and configuration for this bean go here -->
     </bean>
@@ -43,10 +42,9 @@ PetStoreService service = context.getBean("petStore", PetStoreService.class);
 
   ```xml
   <bean id="exampleBean" class="examples.ExampleBean"/>
-  
   <bean name="anotherExample" class="examples.ExampleBeanTwo"/>
   ```
-
+  
 - 使用静态工厂方法构建
 
   ```xml
@@ -480,5 +478,203 @@ Spring也支持使用JDK中基于接口的动态代理，因此，被代理的�
 </bean>
 ```
 
-beans-factory-nature
+### 优雅地关闭IOC容器
+
+主要针对非web应用，在web应用中，Spring提供了自动关闭的功能。
+
+在非web应用中，需要注册一个shutdown hook来确保正确关闭IOC容器，并且相关的销毁方法也会被执行。
+
+调用`ConfigurableApplicationContext`中的`registerShutdownHook`方法即可
+
+```java
+public final class Boot {
+
+    public static void main(final String[] args) throws Exception {
+        ConfigurableApplicationContext ctx = new ClassPathXmlApplicationContext("beans.xml");
+        // add a shutdown hook for the above context...
+        ctx.registerShutdownHook();
+        // app runs here...
+        // main method exits, hook is called prior to the app shutting down...
+    }
+}
+```
+
+### 基于注解配置
+
+对于Bean的配置可以通过java的注解来完成。要启用此功能需要注册注解支持。
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:context="http://www.springframework.org/schema/context"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans
+        https://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/context
+        https://www.springframework.org/schema/context/spring-context.xsd">
+    <!--可以简单地理解为启用注解支持-->
+    <context:annotation-config/>
+</beans>
+```
+
+#### `@Autowired`
+
+自动注入相关属性
+
+- 通过构造方法注入
+
+  在Spring 4.3 中，当bean中只有一个构造方法时，可以不显式声明`Autowired`注解，但当有多个构造方法时，至少有一个构造方法被声明有`Autowired`。
+
+  注：当有多个构造方法上都声明有`Autowired`时，需要设置`required=false`，然后Spring会根据其参数选择哪一个构造方法能被满足（IOC容器中有那个构造方法需要的参数），如果都没有满足，就会去调用默认构造方法（如果有的话）。
+
+  ```java
+  public class MovieRecommender {
+      private final CustomerPreferenceDao customerPreferenceDao;
+      @Autowired
+      public MovieRecommender(CustomerPreferenceDao customerPreferenceDao) {
+          this.customerPreferenceDao = customerPreferenceDao;
+      }
+  }
+  ```
+
+- 通过setter方法注入
+
+  也可以声明在其它任意名称的方法上
+
+  ```java
+  public class SimpleMovieLister {
+      private MovieFinder movieFinder;
+      @Autowired
+      public void setMovieFinder(MovieFinder movieFinder) {
+          this.movieFinder = movieFinder;
+      }
+  }
+  ```
+
+- 直接写在属性上
+
+  还可以和构造方法注入一同使用（setter方法也可以）
+
+  ```java
+  public class MovieRecommender {
+      private final CustomerPreferenceDao customerPreferenceDao;
+      @Autowired
+      private MovieCatalog movieCatalog;
+      @Autowired
+      public MovieRecommender(CustomerPreferenceDao customerPreferenceDao) {
+          this.customerPreferenceDao = customerPreferenceDao;
+      }
+  }
+  ```
+
+注：
+
+1. 在Spring 5.0中，可以使用`@Nullable`表明允许这个属性为`null`
+
+   ```java
+   @Autowired
+   public void setMovieFinder(@Nullable MovieFinder movieFinder) {
+   }
+   ```
+
+2. 当某个属性是Spring中的`BeanFactory`, `ApplicationContext`, `Environment`, `ResourceLoader`, `ApplicationEventPublisher`, and `MessageSource`及其子类时，可以直接属性上声明`@Autowired`。
+
+   ```java
+   public class MovieRecommender {
+       @Autowired
+       private ApplicationContext context;
+       public MovieRecommender() {
+       }
+   }
+   ```
+
+##### 结合`@Qualifier`使用
+
+可以在`@Qualifier`指定bean的名称（默认的名称匹配方式是将bean的名称和属性名进行匹配），从而在`@Autowired`匹配多个bean时，从中选择需要的bean。
+
+```java
+@Autowired
+@Qualifier("main")
+private MovieCatalog movieCatalog;
+}
+```
+
+当`@Qualifier`用在集合上时，也可以具有元素过滤的作用，来将名称满足的bean作为集合进行注入。
+
+#### 通过`@Resource`注入
+
+Spring也支持通过JSR-250中的`@Resource`注解来注入，该注解只能用于属性和settter方法上，并且主要通过名称进行匹配（默认使用属性名）。
+
+```java
+public class SimpleMovieLister {
+
+    private MovieFinder movieFinder;
+
+    @Resource(name="myMovieFinder") 
+    public void setMovieFinder(MovieFinder movieFinder) {
+        this.movieFinder = movieFinder;
+    }
+}
+```
+
+#### `@Value`
+
+主要用来注入外部的配置文件中定义的值（如一个properties文件中的值），并且支持SpEL表达式。
+
+```java
+public class MovieRecommender {
+    private final String catalog;
+    public MovieRecommender(@Value("${catalog.name}") String catalog) {
+        this.catalog = catalog;
+    }
+}
+```
+
+在properties文件中有如下定义
+
+```
+catalog.name=MovieCatalog
+```
+
+#### `PostConstruct`和`PreDestroy`
+
+同样来自JSC-250中的注解，可用于生命周期回调。
+
+```java
+public class CachingMovieLister {
+
+    @PostConstruct
+    public void populateMovieCache() {
+        // populates the movie cache upon initialization...
+    }
+
+    @PreDestroy
+    public void clearMovieCache() {
+        // clears the movie cache upon destruction...
+    }
+}
+```
+
+#### 扫描Bean
+
+Spring提供了`@Component`、`@Service`、`Controller`和`Repository`四个注解用来声明当前类是一个需要由IOC容器管理的bean，其中`@Component`是一个通用注解，而`@Service`、`@Controller`和`@Repository`分别表示这个bean属于业务层，表现层，持久层（详见[三层架构](https://baike.baidu.com/item/%E4%B8%89%E5%B1%82%E6%9E%B6%E6%9E%84/11031448?fr=aladdin)）。
+
+然后，指定需要扫描的包
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:context="http://www.springframework.org/schema/context"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans
+        https://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/context
+        https://www.springframework.org/schema/context/spring-context.xsd">
+    <context:component-scan base-package="org.example"/>
+</beans>
+```
+
+注：`<context:component-scan/>`同时隐含着启用`<context:annotation-config/>`，因此，当使用了前者，就可以不用写后者。
+
+Using Filters to Customize Scanning
 
