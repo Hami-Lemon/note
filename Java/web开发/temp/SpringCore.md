@@ -619,7 +619,7 @@ public class SimpleMovieLister {
 
 #### `@Value`
 
-主要用来注入外部的配置文件中定义的值（如一个properties文件中的值），并且支持SpEL表达式。
+主要用来注入外部的配置文件中定义的值（如一个properties文件中的值）以及基本类型，并且支持SpEL表达式。
 
 ```java
 public class MovieRecommender {
@@ -676,5 +676,647 @@ Spring提供了`@Component`、`@Service`、`Controller`和`Repository`四个注�
 
 注：`<context:component-scan/>`同时隐含着启用`<context:annotation-config/>`，因此，当使用了前者，就可以不用写后者。
 
-Using Filters to Customize Scanning
+##### 扫描包时过滤
+
+在扫描包时，可以在`<context:component-scan/>`中添加子标签`<context:include-filter/>`（被匹配的bean才会保留）或者`<context:exclude-filter/>`（被匹配的bean会被排除）（注解则是`@ComponentScan`中的`includeFilters`和`excludeFilters`）来进行过滤，每一个filter都需要type和expression。type的可选值如下：
+
+| type       | 示例expression               | 描述                             |
+| ---------- | ---------------------------- | -------------------------------- |
+| annotation | `org.example.SomeAnnotation` | 在类上存在指定的注解时，被匹配。 |
+| assignable | `org.example.SomeClass`      | 按照指定的类型进行过滤。         |
+| aspectj    | `org.example..*Service+`     | 通过aspectj表达式匹配。          |
+| regex      | `org\.example\.Default.*`    | 通过正则表达式匹配类名。         |
+
+xml表示：
+
+```xml
+<beans>
+    <context:component-scan base-package="org.example">
+        <context:include-filter type="regex"
+                expression=".*Stub.*Repository"/>
+        <context:exclude-filter type="annotation"
+                expression="org.springframework.stereotype.Repository"/>
+    </context:component-scan>
+</beans>
+```
+
+注解表示：
+
+```java
+@Configuration
+@ComponentScan(basePackages = "org.example",
+        includeFilters = @Filter(type = FilterType.REGEX, pattern = ".*Stub.*Repository"),
+        excludeFilters = @Filter(Repository.class))
+public class AppConfig {
+    ...
+}
+```
+
+#### `@Bean`
+
+用在方法上，表明该方法的返回值是一个需要被IOC容器管理的bean，当方法需要参数时，Spring会尝试自动解决依赖。
+
+```java
+@Component
+public class FactoryMethodComponent {
+
+    @Bean//也可是写在一个被@Configuration注解的类中
+    @Qualifier("public")
+    public TestBean publicInstance() {
+        return new TestBean("publicInstance");
+    }
+    public void doWork() {
+        // Component method implementation omitted
+    }
+}
+```
+
+#### 生成候选bean的索引
+
+虽然类路径扫描非常快，但是Spring内部存在大量的类，添加此依赖，可以通过在编译时创建候选对象的静态列表来提高大型应用程序的启动性能。在此模式下，作为组件扫描目标的所有模块都必须使用此机制。
+
+##### Maven依赖
+
+```xml
+<dependencies>
+    <dependency>
+        <groupId>org.springframework</groupId>
+        <artifactId>spring-context-indexer</artifactId>
+        <version>5.3.9</version>
+        <optional>true</optional>
+    </dependency>
+</dependencies>
+```
+
+这会在应用编译之后生成`META-INF/spring.components`文件，并在运行时自动加载。
+
+#### 使用JSR 330中的标准注解
+
+##### Maven依赖
+
+```xml
+<dependency>
+    <groupId>javax.inject</groupId>
+    <artifactId>javax.inject</artifactId>
+    <version>1</version>
+</dependency>
+```
+
+##### 使用`@Inject`和`@Named`进行依赖注入
+
+等同于`@Autowired`，可使用`@Named`指定bean的名称。
+
+```java
+public class SimpleMovieLister {
+    private MovieFinder movieFinder;
+    @Inject
+    public void setMovieFinder(MovieFinder movieFinder) {
+        this.movieFinder = movieFinder;
+    }
+    public void listMovies() {
+        this.movieFinder.findMovies(...);
+        // ...
+    }
+}
+```
+
+##### `@Named`用在类上
+
+用在类上时等价于`@Component`
+
+```java
+@Named("movieListener")
+public class SimpleMovieLister {
+    private MovieFinder movieFinder;
+    @Inject
+    public void setMovieFinder(MovieFinder movieFinder) {
+        this.movieFinder = movieFinder;
+    }
+}
+```
+
+### 纯注解配置
+
+在上面的基于注解配置中，只是对于bean的配置改为注解方式，但仍需要一个XML文件用于对IOC容器进行一些配置（比如配置组件扫描）。
+
+在Spring中也支持使用纯注解的方式来配置IOC容器，这主要使用到`@Configuration`和`@Bean`注解，前者表明当前类是一个配置类，而后者则用于方法上，表明方法的返回值是一个由IOC容器管理的bean。
+
+```java
+@Configuration
+public class AppConfig {
+
+    @Bean
+    public MyService myService() {
+        return new MyServiceImpl();
+    }
+}
+```
+
+#### 实例化IOC容器
+
+使用XML作为配置文件时，实例化时使用`ClassPathXmlApplicationContext`，当使用纯注解进行配置时，则需要使用`AnnotationConfigApplicationContext`来加载配置类，并实例化IOC容器。
+
+```java
+public static void main(String[] args) {
+    ApplicationContext ctx = new AnnotationConfigApplicationContext(AppConfig.class);
+    MyService myService = ctx.getBean(MyService.class);
+    myService.doStuff();
+}
+```
+
+也可以使用`register`方法来注册配置类：
+
+```java
+public static void main(String[] args) {
+    AnnotationConfigApplicationContext ctx = new AnnotationConfigApplicationContext();
+    ctx.register(AppConfig.class, OtherConfig.class);
+    ctx.register(AdditionalConfig.class);
+    ctx.refresh();
+    MyService myService = ctx.getBean(MyService.class);
+    myService.doStuff();
+}
+```
+
+##### 启用组件扫描
+
+```java
+@Configuration
+@ComponentScan(basePackages = "com.acme") 
+public class AppConfig  {
+    ...
+}
+```
+
+##### web应用中纯注解配置
+
+在web应用中，需要使用`AnnotationConfigWebApplicationContext`来代替`AnnotationConfigApplicationContext`。
+
+web.xml配置为：
+
+```xml
+<web-app>
+    <!-- 配置 ContextLoaderListener 使用 AnnotationConfigWebApplicationContext
+        去代替默认的 XmlWebApplicationContext -->
+    <context-param>
+        <param-name>contextClass</param-name>
+        <param-value>
+            org.springframework.web.context.support.AnnotationConfigWebApplicationContext
+        </param-value>
+    </context-param>
+
+    <!-- 指定配置类，有多个时可以使用逗号或空格进行分隔 -->
+    <context-param>
+        <param-name>contextConfigLocation</param-name>
+        <param-value>com.acme.AppConfig</param-value>
+    </context-param>
+
+    <!-- Bootstrap the root application context as usual using ContextLoaderListener -->
+    <listener>
+        <listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
+    </listener>
+
+    <!-- Declare a Spring MVC DispatcherServlet as usual -->
+    <servlet>
+        <servlet-name>dispatcher</servlet-name>
+        <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+        <!-- Configure DispatcherServlet to use AnnotationConfigWebApplicationContext
+            instead of the default XmlWebApplicationContext -->
+        <init-param>
+            <param-name>contextClass</param-name>
+            <param-value>
+             org.springframework.web.context.support.AnnotationConfigWebApplicationContext
+            </param-value>
+        </init-param>
+        <init-param>
+            <param-name>contextConfigLocation</param-name>
+            <param-value>com.acme.web.MvcConfig</param-value>
+        </init-param>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>dispatcher</servlet-name>
+        <url-pattern>/app/*</url-pattern>
+    </servlet-mapping>
+</web-app>
+```
+
+#### 注解方式的Lookup Method注入
+
+在前面有写到，当一个Singleton对象需要一个Prototype对象作为依赖时，可以使用Lookup 方法注入，在基于注解时，配置如下：
+
+```java
+public abstract class CommandManager {
+    public Object process(Object commandState) {
+        // grab a new instance of the appropriate Command interface
+        Command command = createCommand();
+        // set the state on the (hopefully brand new) Command instance
+        command.setState(commandState);
+        return command.execute();
+    }
+    protected abstract Command createCommand();
+}
+```
+
+```java
+@Bean
+@Scope("prototype")
+public AsyncCommand asyncCommand() {
+    AsyncCommand command = new AsyncCommand();
+    return command;
+}
+
+@Bean
+public CommandManager commandManager() {
+    return new CommandManager() {
+        protected Command createCommand() {
+            return asyncCommand();
+        }
+    }
+}
+```
+
+## SpEL(Spring EL 表达式)
+
+Spring中的expression语句，可以在运行时查询和操纵对象。
+
+### 定义bean时使用SpEL表达式
+
+无论是基于注解还是XML的配置都可以使用SpEL表达式，语法为`#{ <expression string> }`
+
+```xml
+<bean id="numberGuess" class="org.spring.samples.NumberGuess">
+    <property name="randomNumber" value="#{ T(java.lang.Math).random() * 100.0 }"/>
+</bean>
+```
+
+```java
+public class FieldValueTestBean {
+
+    @Value("#{ systemProperties['user.region'] }")
+    private String defaultLocale;
+    public void setDefaultLocale(String defaultLocale) {
+        this.defaultLocale = defaultLocale;
+    }
+    public String getDefaultLocale() {
+        return this.defaultLocale;
+    }
+}
+```
+
+### SpEL语法
+
+#### 字面量
+
+支持的字面量类型为字符串、数字、布尔和null值。字符串由单引号包裹，如果需要在将单引号本身包含在字符串中，则需要两个单引号。
+
+#### 属性和列表
+
+使用`.`来获取对象中的属性，`[]`来获取列表中对应索引的值，对应map集合，可以在`[]`传入键来取值。
+
+#### 内联列表
+
+使用`{}`来创建一个列表，如`{1,2,3,4}`
+
+#### 内联map
+
+使用`{key:value}`来创建一个map，如`{dob:{day:10,month:'July',year:1856}}`
+
+#### 创建数组
+
+和java语法相同，如`new int[4]`，`new int[]{1,2,3}`，`new int[4][5]`。
+
+#### 调用方法
+
+和java语法相同，如`'abc'.substring(1, 3)`，`isMember('Mihajlo Pupin')`。
+
+#### 运算符
+
+##### 关系运算符
+
+和java相同，在比较时，如果有`null`，那么它会被当作 ‘无’ 来对待（不是0），也就是任何值都比`null`大。
+
+同时Spring还提供了类型匹配`instanceof`和正则匹配`matches`。
+
+```
+'xyz' instanceof T(Integer)  --- false
+'5.00' matches '^-?\\d+(\\.\\d{2})?$'  ---true
+```
+
+注：作为基本类型的数据，都会使用包装类型来表示，例如：`1 instanceof T(int)`为false，而`1 instanceof T(Integer)`为`true`。
+
+每一个关系运算符都对应一个等价的字母表示形式：
+
+- `lt` (`<`)
+- `gt` (`>`)
+- `le` (`<=`)
+- `ge` (`>=`)
+- `eq` (`==`)
+- `ne` (`!=`)
+- `div` (`/`)
+- `mod` (`%`)
+- `not` (`!`)
+
+##### 逻辑运算符
+
+- `and` (`&&`)
+- `or` (`||`)
+- `not` (`!`)
+
+#### 类型
+
+通过`T()`表明这是一个类型数据（Class类型），可用于类型匹配或者获取其中的static成员，默认会按照给定的名称去`java.lang`包查找，其它包则需要使用全限定类名。如`T(String)`，`T(java.util.Date)`
+
+#### 构造器
+
+使用`new`操作符来创建对象，除`java.lang`包外的类，都需要使用全限定类名。
+
+#### 三元运算符
+
+和java中相同，如`false ? 'trueExp' : 'falseExp'`
+
+#### 猫王运算符
+
+`name?:'Unknown'`，主要用于判空，等价于`name != null ? name : 'Unknown'`，和kotlin和的`?:`相同。
+
+## AOP(面向切面编程)
+
+面向切面编程（AOP）是对面向对象编程（OOP）地一种补充，在OOP中，最小单位是一个类，而在AOP中则是一个切面。
+
+### AOP相关术语
+
+- 切面（aspect）：一种跨越多个类的模块化概念，由切点和增强组成。
+- 连接点（join point）：程序运行中的某个特定位置。
+- 通知（advice）：切面在一个特定连接点的行为，分为环绕通知，后置通知，前置通知等。
+- 切入点（pointcut）：定义通知在哪些连接点上执行。通知会和一个切入点表达式相关联并且运行在被切入点匹配的连接点上。
+- 目标对象（target object）：包含一个或多个切面的对象。
+- 代理对象（AOP proxy）：由AOP框架创建，用于实现切面操作的代理对象，在Spring中由JDK的动态代理或CGLIB来实现。
+- 织入（weaving）：将切面应用到目标对象，并创建代理对象的过程。
+
+在Spring AOP中包含以下几种通知（advice）：
+
+- 前置通知（before advice）：运行在连接点前，但不会阻止运行到连接点的通知。
+- 后置返回通知（after returning advice）：在连接点运行完成后运行的通知（例如一个方法正常返回且没有抛出异常）
+- 后置异常通知（after throwing advice）：在方法因异常而结束时运行的通知。
+- 后置最终通知（after advice）：连接点运行结束时运行的通知。（不管是正常返回还是抛出异常）
+- 环绕通知（around advice）：围绕在连接点前后的通知，可以在方法调用前后执行自定义的行为，并且需要决定是继续运行还是中断。
+
+### 启用@AspectJ 支持
+
+在AspectJ项目中使用注解的风格来定义一个切面，在Spring中也采用了这种风格，并且使用AspectJ提供的库来解析和匹配切入点。但在运行时仍然是Spring的原生AOP，并不依赖于AspectJ的解释器和织入器。
+
+@AspectJ支持则是基于@AspectJ 切面来配置AOP，并且当检测到一个bean被一个或多个切面通知时，会自动生成其代理类并且拦截方法以执行通知。
+
+注：因为切入点需要使用AspectJ提供的库来解析，所以需要添加`aspectjweaver`依赖。
+
+- 使用注解开启@AspectJ支持
+
+  ```java
+  @Configuration
+  @EnableAspectJAutoProxy
+  public class AppConfig {
+  
+  }
+  ```
+
+- xml方式
+
+  ```xml
+  <aop:aspectj-autoproxy/>
+  ```
+
+### 定义切面
+
+当开启@AspectJ支持后，任何被定义为@AspectJ切面的bean都会被Spring检测到并用于配置Spring AOP。
+
+- XML方式
+
+  ```xml
+  <bean id="myAspect" class="org.xyz.NotVeryUsefulAspect">
+      <!-- configure properties of the aspect here -->
+  </bean>
+  ```
+
+- 注解方式
+
+  ```java
+  @Component
+  @Aspect
+  public class NotVeryUsefulAspect {
+  
+  }
+  ```
+
+### 定义切入点
+
+由于Spring只支持对方法执行时的连接点，所以定义一个切入点也可理解为匹配一个运行的方法。一个切入点的声明包括两个部分：包含了名称和任意参数的签名以及用来确定方法的切入点表达式。在Spring中签名可以通过一个常规的方法来定义（这个方法返回值必须为void，因为签名并不包含返回值，并且这个方法主要用来定义签名，所以应为空方法），而切入点表达式则使用`@Pointcut`注解。
+
+例如，以下例子定义了一个名为`anyOldTransfer`并且匹配任意方法名为`transfer`的切入点。
+
+```java
+@Pointcut("execution(* transfer(..))") // the pointcut expression
+private void anyOldTransfer() {} // the pointcut signature
+```
+
+在切入点表达式（关于切入点表达式的详细语法见[AspectJ](https://www.eclipse.org/aspectj/doc/released/progguide/index.html)）中，Spring支持使用以下AspectJ切入点指示符（pointcut designators，PCD）:
+
+- `execution`：用于匹配方法运行的连接点。
+- `within`：通过指定的类型来限制匹配的连接点。
+- `this`：限制匹配的连接点，其中bean的引用是一个指定类型的实例。
+- `target`：限制匹配的连接点，其中目标对象是一个指定类型的实例。
+- `args`：限制匹配的连接点，其中参数是指定类型的实例。
+
+注：Spring AOP是基于代理实现，所以对于代理（对应this）和代理对象后的目标对象（对应target）是两个不同的对象。
+
+#### 组合切入点表达式
+
+可以使用`&&`，`||`，`!`对切入点表达式进行组合。
+
+```java
+//匹配所有public方法
+@Pointcut("execution(public * *(..))")
+private void anyPublicOperation() {} 
+//匹配所有trading包中的方法
+@Pointcut("within(com.xyz.myapp.trading..*)")
+private void inTrading() {} 
+//上面两个的组合
+@Pointcut("anyPublicOperation() && inTrading()")
+private void tradingOperation() {} 
+```
+
+#### 示例
+
+在Spring AOP中多使用`execution`切入点指示符，其格式如下：
+
+```
+execution(modifiers-pattern? ret-type-pattern declaring-type-pattern?name-pattern(param-pattern)throws-pattern?)
+```
+
+其中，除了`ret-type-pattern`，`name-pattern`和`param-pattern`以外，其余部分均为可选的。`ret-type-pattern`指定方法的返回值类型（需要写全限定名称，可使用`*`通配）；`name-pattern`则是匹配方法的名称，可以使用`*`通配全部或一部分名称；对于`param-pattern`，`()`匹配无参方法，`(..)`匹配任意个数（0个或多个）的参数，`(*)`匹配只有一个参数，类型为任意类型，`(*,String)`则匹配有两个参数且第一个为任意类型，第二个为String类型。
+
+- 任何public方法
+
+  ```
+  execution(public * *(..))
+  ```
+
+- 任何方法名是以set开头的方法
+
+  ```
+  execution(* set*(..))
+  ```
+
+- 任何定义在`AccountService`中的方法
+
+  ```
+  execution(* com.xyz.service.AccountService.*(..))
+  ```
+
+- 任何定义在service包中的方法
+
+  ```
+  execution(* com.xyz.service.*.*(..))
+  ```
+
+- 任何定义在service包及其子包的方法
+
+  ```
+  execution(* com.xyz.service..*.*(..))
+  ```
+
+- 任何service包中的连接点
+
+  ```
+  within(com.xyz.service.*)
+  ```
+
+- 任何service包及其子包中的连接点
+
+  ```
+  within(com.xyz.service..*)
+  ```
+
+- 任何bean的名称以Service结尾的bean中的连接点
+
+  ```
+  bean(*Service)
+  ```
+
+### 定义通知
+
+#### 前置通知（Before Advice）
+
+在切入点匹配的方法执行前运行。
+
+```java
+@Aspect
+public class BeforeExample {
+	//也可以引用定义好的切入点@Before("com.xyz.myapp.CommonPointcuts.dataAccessOperation()")
+    @Before("execution(* com.xyz.myapp.dao.*.*(..))")
+    public void doAccessCheck() {
+        // ...
+    }
+}
+```
+
+#### 后置返回通知（After Returning Advice)
+
+在方法return时运行
+
+```java
+@Aspect
+public class AfterReturningExample {
+
+    @AfterReturning("com.xyz.myapp.CommonPointcuts.dataAccessOperation()")
+    public void doAccessCheck() {
+        // ...
+    }
+}
+```
+
+```java
+@Aspect
+public class AfterReturningExample {
+	//获取方法的返回值，并作为参数绑定到retVal上
+    @AfterReturning(
+        pointcut="com.xyz.myapp.CommonPointcuts.dataAccessOperation()",
+        returning="retVal")
+    public void doAccessCheck(Object retVal) {
+        // ...
+    }
+}
+```
+
+#### 后置异常通知（After Throwing Advice）
+
+在方法因抛出异常而退出时运行。注：如果方法在内部将处理（即不抛出异常），那么此通知不会运行。
+
+```java
+@Aspect
+public class AfterThrowingExample {
+
+    @AfterThrowing("com.xyz.myapp.CommonPointcuts.dataAccessOperation()")
+    public void doRecoveryActions() {
+        // ...
+    }
+}
+```
+
+可以指定`throwing`属性来限制异常的类型并将其绑定到参数上。
+
+```java
+@Aspect
+public class AfterThrowingExample {
+
+    @AfterThrowing(
+        pointcut="com.xyz.myapp.CommonPointcuts.dataAccessOperation()",
+        throwing="ex")
+    public void doRecoveryActions(DataAccessException ex) {
+        // ...
+    }
+}
+```
+
+#### 后置通知（After Finally Advice）
+
+在方法退出时运行，类似于try-catch语句中finally，一定会被执行，而后置返回通知只在方法成功返回（无异常）时才会运行。
+
+```java
+@Aspect
+public class AfterFinallyExample {
+
+    @After("com.xyz.myapp.CommonPointcuts.dataAccessOperation()")
+    public void doReleaseLock() {
+        // ...
+    }
+}
+```
+
+#### 环绕通知
+
+既可以在方法执行前运行，也可以在方法执行后运行，并且能够决定方法是否继续运行。
+
+在环绕通知中，第一个参数必须为`ProceedingJoinPoint`类型，可以通过调用其`proceed`方法来运行切入点匹配的方法，该方法可以调用一次，多次或者一次也不调用。
+
+```java
+@Aspect
+public class AroundExample {
+
+    @Around("com.xyz.myapp.CommonPointcuts.businessService()")
+    public Object doBasicProfiling(ProceedingJoinPoint pjp) throws Throwable {
+        // start stopwatch
+        Object retVal = pjp.proceed();
+        // stop stopwatch
+        return retVal;
+    }
+}
+```
+
+#### 执行顺序
+
+![image-20210731175116841](https://gitee.com/Hami-Lemon/image-repo/raw/master/images/2021/07/31/20210731175124.png)
+
+#### 通知优先级
+
+当在同一个连接点有多个通知需要运行时，可以指定每个切面的优先级来确定执行顺序，在确定顺序时，对目标方法执行前运行的通知，优先级越大，越先执行（如对于两个前置通知，优先级大的先运行）；而在目标方法执行后运行的通知，优先级越大，越后执行（如对于两个后置通知，优先级大的后运行）。
+
+在Spring中可以给切面加上`@Order`注解，并设置值。其中，值越小，优先级越大。
 
