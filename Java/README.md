@@ -7,10 +7,11 @@
   - [中级内容](基础知识/中级内容.md)
   - [高级内容](高级内容.md)
 - web开发
+  - Spring
+    - [Spring Core](web开发/Spring/SpringCore.md)
+    - [Spring MVC](web开发/Spring/SpringMVC.md)
+    - [Spring Boot](web开发/Spring/SpringBoot.md)
   - [Servlet](web开发/javaweb.md)
-  - [Spring](web开发/Spring.md)
-  - [SpringMVC](web开发/springMVC.md)
-  - [SpringBoot](web开发/springboot.md)
   - [Mybatis](web开发/Mybatis.md)
   - [前端入门](web开发/前端.md)
   - [Netty](web开发/Netty.md)
