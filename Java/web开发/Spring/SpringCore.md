@@ -374,7 +374,7 @@ Spring可以自动注入一个所需要的依赖，而不用显式的描述出�
 
 注意：Spring中的单例和设计模式中的单例并不完全相同，设计模式中的单例主要通过编码方式来实现每个ClassLoader加载对象时都只会获取到同一个对象，而在Spring中则是一个容器中只有一个对象，即在Spring的一个容器中，一个单例对象只会创建一个且只有一个对象（或许可以理解为有多个容器时会有多个对象？）。
 
-![singleton](https://docs.spring.io/spring-framework/docs/current/reference/html/images/singleton.png)
+![singleton](https://gitee.com/Hami-Lemon/image-repo/raw/master/images/2021/08/01/20210801170224.png)
 
 #### prototype
 
@@ -382,7 +382,7 @@ Spring可以自动注入一个所需要的依赖，而不用显式的描述出�
 
 相比于其它几种作用域，对于prototype，Spring并不会管理它的整个生命周期，Spring只负责创建对象，而对于释放资源这类操作需自己去处理。
 
-![prototype](https://docs.spring.io/spring-framework/docs/current/reference/html/images/prototype.png)
+![prototype](https://gitee.com/Hami-Lemon/image-repo/raw/master/images/2021/08/01/20210801170214.png)
 
 #### Singleton对象依赖于Prototype
 
@@ -1046,6 +1046,7 @@ public class FieldValueTestBean {
 - 切面（aspect）：一种跨越多个类的模块化概念，由切点和增强组成。
 - 连接点（join point）：程序运行中的某个特定位置。
 - 通知（advice）：切面在一个特定连接点的行为，分为环绕通知，后置通知，前置通知等。
+- 引介（Introduction）：一种特殊的增强，可以为类添加一些属性和方法。
 - 切入点（pointcut）：定义通知在哪些连接点上执行。通知会和一个切入点表达式相关联并且运行在被切入点匹配的连接点上。
 - 目标对象（target object）：包含一个或多个切面的对象。
 - 代理对象（AOP proxy）：由AOP框架创建，用于实现切面操作的代理对象，在Spring中由JDK的动态代理或CGLIB来实现。
@@ -1320,3 +1321,159 @@ public class AroundExample {
 
 在Spring中可以给切面加上`@Order`注解，并设置值。其中，值越小，优先级越大。
 
+####  向通知传递参数
+
+要在通知中使用参数，可以使用`args`PCD，当在`args`表达式中声明对应的参数名时，相关联的参数将会在通知运行时被传递进去。
+
+```java
+@Before("com.xyz.myapp.CommonPointcuts.dataAccessOperation() && args(account,..)")
+public void validateAccount(Account account) {
+    // ...
+}
+```
+
+此外，也可以将这样的切入点声明出来，以便后续引用
+
+```java
+@Pointcut("com.xyz.myapp.CommonPointcuts.dataAccessOperation() && args(account,..)")
+private void accountDataAccessOperation(Account account) {}
+
+@Before("accountDataAccessOperation(account)")
+public void validateAccount(Account account) {
+    // ...
+}
+```
+
+注：也可以使用`argsName`来列出方法中的参数名，进而让Spring AOP去匹配。（当第一个参数是`JoinPoint`, `ProceedingJoinPoint`或`JoinPoint.StaticPart` 类型时，可以不写）
+
+```java
+@Before(value="com.xyz.lib.Pointcuts.anyPublicMethod() && target(bean) && @annotation(auditable)",
+        argNames="bean,auditable")
+public void audit(JoinPoint jp, Object bean, Auditable auditable) {
+    AuditCode code = auditable.value();
+    // ... use code, bean, and jp
+}
+```
+
+### 基于XML配置AOP
+
+也可以使用XML方式来声明切入点表达式，通知和切面。对于所有关于AOP的配置，都需要放在`<aop:config>`标签中（可以有多个`<aop:config>`标签），在`<aop:config>`标签中能够包含切入点，通知和切面。
+
+#### 定义切面
+
+```xml
+<aop:config>
+    <aop:aspect id="myAspect" ref="aBean">
+        ...
+    </aop:aspect>
+</aop:config>
+<bean id="aBean" class="...">
+    ...
+</bean>
+```
+
+#### 定义切入点
+
+```xml
+<aop:config>
+	<!--一个顶层切入点，可以被其它切面引用-->
+    <aop:pointcut id="businessService"
+        expression="execution(* com.xyz.myapp.service.*.*(..))"/>
+    <!--引用一个通过注解定义的切入点--->
+    <aop:pointcut id="businessService"
+        expression="com.xyz.myapp.CommonPointcuts.businessService()"/>
+</aop:config>
+```
+
+也可以在切面中定义切入点，其只能在这个切面中使用。
+
+```xml
+<aop:config>
+    <aop:aspect id="myAspect" ref="aBean">
+        <aop:pointcut id="businessService"
+            expression="execution(* com.xyz.myapp.service.*.*(..))"/>
+        ...
+    </aop:aspect>
+</aop:config>
+```
+
+#### 定义通知
+
+```xml
+<aop:aspect id="beforeExample" ref="aBean">
+	<!--前置通知-->
+    <!--dataAccessOperation是一个切入点的id-->
+    <aop:before
+        pointcut-ref="dataAccessOperation"
+        method="doAccessCheck"/>
+    <!--后置返回通知-->
+    <aop:after-returning
+        pointcut-ref="dataAccessOperation"
+        method="doAccessCheck"/>
+    <!--后置异常通知-->
+    <aop:after-throwing
+        pointcut-ref="dataAccessOperation"
+        method="doRecoveryActions"/>
+    <!--后置通知-->
+    <aop:after
+        pointcut-ref="dataAccessOperation"
+        method="doReleaseLock"/>
+    <!--环绕通知-->
+    <aop:around
+        pointcut-ref="businessService"
+        method="doBasicProfiling"/>
+</aop:aspect>
+```
+
+### 代理机制
+
+Spring中使用JDK的动态代理和CGLIB来创建目标对象的代理类，如果目标对象至少实现了一个接口，则会使用JDK的动态代理，否则会使用CGLIB来创建代理类。
+
+也可强制使用CGLIB来创建代理类：
+
+```xml
+<aop:config proxy-target-class="true">
+    <!-- other beans defined here... -->
+</aop:config>
+```
+
+或
+
+```xml
+<aop:aspectj-autoproxy proxy-target-class="true"/>
+```
+
+### 理解AOP代理
+
+首先有如下的例子
+
+```java
+public class SimplePojo implements Pojo {
+
+    public void foo() {
+        // this next method invocation is a direct call on the 'this' reference
+        this.bar();
+    }
+
+    public void bar() {
+        // some logic...
+    }
+}
+```
+
+```java
+public class Main {
+
+    public static void main(String[] args) {
+        ProxyFactory factory = new ProxyFactory(new SimplePojo());
+        factory.addInterface(Pojo.class);
+        factory.addAdvice(new RetryAdvice());
+
+        Pojo pojo = (Pojo) factory.getProxy();
+        // this is a method call on the proxy!
+        pojo.foo();
+    }
+}
+```
+
+在这里，通过代理的方式来调用SimplePojo中的`foo`方法，其中`pojo`由代理的方式创建出来，所以其引用是一个`SimplePojo`的代理类，当调用其中的方法时，会通过这个代理类去调用相关方法。然而，当方法调用到达目标对象（这里面的`SimplePojo`）时，可能会出现这个方法中调用了类中的其它方法，如`this.foo()`或`this.bar()`。这里的`this`将会直接调用方法，而不是通过代理类，这意味着通过`this`调用的方法并不会使相关通知执行。
