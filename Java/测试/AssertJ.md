@@ -715,3 +715,379 @@ void assertSoftly_example() {
 
 ## AssertJ-DB
 
+`assertJ-db`模块可用于对关系型数据库中的数据进行断言。
+
+例如：
+
+```java
+Table table = new Table(dataSource, "members");
+
+// 检验 name 字段的值
+assertThat(table).column("name")
+        .value().isEqualTo("Hewson")
+        .value().isEqualTo("Evans")
+        .value().isEqualTo("Clayton")
+        .value().isEqualTo("Mullen");
+
+// 检验第二行数据的值（索引从0开始）
+assertThat(table).row(1)
+        .value().isEqualTo(2)
+        .value().isEqualTo("Evans")
+        .value().isEqualTo("David Howell")
+        .value().isEqualTo("The Edge")
+        .value().isEqualTo(DateValue.of(1961, 8, 8))
+        .value().isEqualTo(1.77);
+```
+
+### Maven依赖
+
+```java
+<dependency>
+  <groupId>org.assertj</groupId>
+  <artifactId>assertj-db</artifactId>
+  <version>2.0.2</version>
+  <scope>test</scope>
+</dependency>
+```
+
+静态导入相关方法：
+
+```java
+import static org.assertj.db.api.Assertions.assertThat;
+```
+
+### 示例数据
+
+假设数据库中存在以下三张表：
+
+- MEMBERS表：
+
+  |  ID  |   NAME    |   FIRSTNAME    |  SURNAME   | BIRTHDATE | SIZE |
+  | :--: | :-------: | :------------: | :--------: | :-------: | :--: |
+  |  1   | 'Hewson'  |  'Paul David'  |   'Bono'   | 05-10-60  | 1.75 |
+  |  2   |  'Evans'  | 'David Howell' | 'The Edge' | 08-08-61  | 1.77 |
+  |  3   | 'Clayton' |     'Adam'     |            | 03-13-60  | 1.78 |
+  |  4   | 'Mullen'  |    'Larry'     |            | 10-31-61  | 1.70 |
+
+- ALBUMS表：
+
+  |  ID  | RELEASE  |          TITLE           | NUMBEROFSONGS | DURATION | LIVE |
+| :--: | :------: | :----------------------: | :-----------: | :------: | :--: |
+  |  1   | 10-20-80 |          'Boy'           |      12       |  42:17   |      |
+  |  2   | 10-12-81 |        'October'         |      11       |  41:08   |      |
+  |  3   | 02-28-83 |          'War'           |      10       |  42:07   |      |
+  |  4   | 11-07-83 | 'Under a Blood Red Sky'  |       8       |  33:25   | true |
+  |  5   | 10-01-84 | 'The Unforgettable Fire' |      10       |  42:42   |      |
+  |  6   | 06-10-85 | 'Wide Awake in America'  |       4       |  20:30   | true |
+  |  7   | 03-09-87 |    'The Joshua Tree'     |      11       |  50:11   |      |
+  |  8   | 10-10-88 |     'Rattle and Hum'     |      17       |  72:27   |      |
+
+- GROUP表：
+
+  |  ID  |    NAME    |
+  | :--: | :--------: |
+  |  1   |    'U2'    |
+  |  2   | 'Coldplay' |
+
+### 连接数据库
+
+- DataSource
+
+  直接使用一个常规的DataSource来获得数据库连接。
+
+- Source
+
+  通过AssertJ中提供的Source来连接数据库。
+
+  ```java
+  Source source = new Source("jdbc:mysql://localhost:3306/demo?" +
+                  "serverTimezone=Asia/Shanghai",
+                  "root", "root");
+  ```
+
+### 数据库中的元素
+
+在这里只有三种根元素：`Table`，`Request`和`Changes`。而其它元素则作为根元素的子元素存在。
+
+根元素用来断言的开始，即`assertThat`方法的参数。
+
+#### Table
+
+表示数据库中存在的一张表。
+
+```java
+// 通过dataSource 来获取 members表
+Table table1 = new Table(dataSource, "members");
+// 通过source 来获取members表
+Table table2 = new Table(source, "members");
+// 获取members表，但只包含id 和 name两个字段的数据
+Table table3 = new Table(source, "members", new String[] { "id", "name" }, null);
+// 获取members表，但不包含birthdate字段的数据
+Table table4 = new Table(source, "members", null, new String[] { "birthdate" });
+// 获取members表，但只包含name字段的数据，因为id被包括之后又被排除掉
+Table table5 = new Table(source, "members", 
+                         new String[] { "id", "name" }, 
+                         new String[] { "id" });
+//获取members表数据，并按照name进行升序排序
+Table table8 = new Table(source, "members", new Order[] {
+                                                        Order.asc("name")
+                                                      });
+```
+
+#### Request
+
+表示在数据库中执行的一条SQL语句。
+
+```java
+Request request1 = new Request(source,
+                               "select name, firstname from members " +
+                               "where id = 2 or id = 3");
+//支持使用 ？ 作为占位符，然后传递参数
+Request request4 = new Request(dataSource,
+                               "select name, firstname from members " +
+                               "where name like ? and firstname like ?;",
+                               "%e%",
+                               "%Paul%");
+```
+
+#### Row
+
+表示Table，Request的数据中，某一行的内容。
+
+#### Column
+
+表示Table，Request的数据中，某一列（即某一个字段）的内容。
+
+#### Value
+
+在一个Row或一个Column中的某一个值。
+
+### 输出数据
+
+可以将数据库中的数据输出。
+
+```java
+import static org.assertj.db.output.Outputs.output;
+
+Table table = new Table(dataSource, "members");
+// 输出 table 的内容到控制台
+output(table).toConsole();
+// 以普通文本的形式输出table的内容到控制台，以HTMl的形式输出到文件中
+output(table).toConsole()
+    .withType(OutputType.HTML).toFile("test.html");
+```
+
+### 定位
+
+当以`Table`或`Request`作为`assertThat`的参数时，可以通过一些方法来定位到具体某一行或者某一个字段。这些方法在设计上有一些相同点：
+
+- 如果调用无参的方法，则表示获取到下一个相应的元素。（如果是第一次调用就获取到第一个元素）例如两次调用 `row`方法，则获取到第二行的元素。
+- 如果参数是`int`类型，则意味着通过索引来定位元素，例如定义到第几行元素。
+- 如果参数是`String`类型，则意味着通过字段名来定位元素。
+
+#### 定位至某一行
+
+```java
+// 定位到第一行
+assertThat(tableOrRequest).row()...
+// 定位到第二行
+assertThat(tableOrRequest).row().row()...
+//定位到索引为2的那一行（第3行）
+assertThat(tableOrRequest).row(2)...
+//定位到索引为6的那一行（第7行）
+assertThat(tableOrRequest).row(2).row(6)...
+//定位到索引为3的那一行
+assertThat(tableOrRequest).row(2).row()...
+//返回这一行所在的表
+assertThat(table).row().returnToTable()...
+//返回对应的request
+assertThat(request).row().returnToRequest()...
+```
+
+#### 定位到某一字段
+
+```java
+// 定位到第一个字段
+assertThat(tableOrRequest).column()...
+//定位到第二个字段
+assertThat(tableOrRequest).column().column()...
+//定位到索引为2的字段
+assertThat(tableOrRequest).column(2)...
+//定位到索引为6的字段
+assertThat(tableOrRequest).column(2).column(6)...
+//定位到索引为3的字段
+assertThat(tableOrRequest).column(2).column()...
+//定位到第一个字段
+//并不会定位到第一行的第一个字段，定位的内容和assertThat(tableOrRequest).column()相同
+assertThat(tableOrRequest).row(2).column()...
+//定位到索引为3的字段
+assertThat(tableOrRequest).row(2).column(3)...
+//定位到索引为4的字段
+assertThat(tableOrRequest).column(3).row(2).column()...
+//定位到字段名为 surname 的字段
+assertThat(tableOrRequest).column("surname")...
+
+assertThat(tableOrRequest).column("surname").column().column(6).column("id")...
+//返回 table
+assertThat(table).column().returnToTable()...
+// 返回request
+assertThat(request).column().returnToRequest()...
+```
+
+#### 定位到某一个值
+
+```java
+// 定位到第一行中的第一个值
+assertThat(tableOrRequest).row().value()...
+//定位到第一个字段的第二个值
+assertThat(tableOrRequest).column().value().value()...
+
+assertThat(tableOrRequest).column().value(2)...
+
+assertThat(tableOrRequest).row(4).value(2).value(6)...
+
+assertThat(tableOrRequest).column(4).value(2).value()...
+//定位到第一个字段（索引为0）的第5个值（索引为4）
+assertThat(tableOrRequest).column().value(3).row(2).column(0).value()...
+//定位到第一行中 surname 字段对应的值
+assertThat(tableOrRequest).row().value("surname")...
+
+assertThat(tableOrRequest).row().value("surname").value().value(6).value("id")...
+```
+
+### 断言
+
+#### 断言某一字段的内容
+
+```java
+//断言live字段的内容为 true,false,true
+assertThat(request).column("live").hasValues(true, false, true);
+
+// 从文件和从资源文件夹下获取
+byte[] bytesFromFile = Assertions.bytesContentOf(file);
+byte[] bytesFromClassPath = Assertions.bytesContentFromClassPathOf(resource);
+// Verify that the values of the second column of the request
+// was equal to the bytes from the file, to null and to bytes from the resource
+assertThat(request).column(1).hasValues(bytesFromFile, null, bytesFromClassPath);
+
+assertThat(table).column().hasValues(5.9, 4, new BigInteger("15000"));
+
+assertThat(table).column()
+            .hasValues(LocalDate.of(2007, 12, 23),
+                       LocalDate.of(1975, 5, 19));
+
+assertThat(table).column("name")
+            .hasValues("Hewson",
+                       "Evans",
+                       "Clayton",
+                       "Mullen");
+
+assertThat(table).column().hasValues(
+    UUID.fromString("30B443AE-C0C9-4790-9BEC-CE1380808435"),
+    UUID.fromString("0E2A1269-EFF0-4233-B87B-B53E8B6F164D"),                              
+    UUID.fromString("2B0D1BDD-909E-4362-BA10-C930BA82718D"));
+
+assertThat(table).column().hasValues('T', 'e', 's', 't');
+```
+
+#### 断言字段名称
+
+```java
+// 断言第5个字段是否名为firstname
+assertThat(table).column(4).hasColumnName("firstname");
+//验证第2行的第3值是否来自 name 字段
+assertThat(request).row(1).value(2).hasColumnName("name");
+```
+
+#### 断言是否包含null值
+
+```java
+// 验证第5个字段中是否仅有 null 值
+assertThat(table).column(4).hasOnlyNullValues();
+// 验证 name 字段中是否仅有非null值
+assertThat(request).column("name").hasOnlyNotNullValues();
+```
+
+#### 断言某一个字段的类型
+
+```java
+// 验证 firstname 字段是否是文本类型，这会验证该字段下的所有内容，如果有null值则不通过
+assertThat(table).column("firstname").isOfType(ValueType.TEXT, false);
+//同上
+assertThat(request).column(2).isText(false);
+//同上，但允许 null 值
+assertThat(request).column(2).isText(true);
+```
+
+#### 断言某一字段的内容
+
+```java
+//和hasValues相同，但不考虑顺序
+assertThat(table).column("name").containsValues("Hewson",
+                                                "Evans",
+                                                "Clayton",
+                                                "Mullen");
+// 和上一个结果相同，因为顺序不重要
+assertThat(table).column("name").containsValues("Evans",
+                                                "Clayton",
+                                                "Hewson",
+                                                "Mullen");
+```
+
+#### 断言字段数量
+
+```java
+//验证这张表中有6个字段
+assertThat(table).hasNumberOfColumns(6);
+//字段数大于5
+assertThat(table).hasNumberOfColumnsGreaterThan(5);
+// 大于等于5
+assertThat(request).hasNumberOfColumnsGreaterThanOrEqualTo(5);
+// 小于
+assertThat(changes).hasNumberOfColumnsLessThan(6);
+// 小于等于
+assertThat(changes).hasNumberOfColumnsLessThanOrEqualTo(6);
+```
+
+#### 断言行数
+
+```java
+//断言这张表中的7行数据
+assertThat(table).hasNumberOfRows(7);
+assertThat(table).hasNumberOfRowsGreaterThan(5);
+assertThat(request).hasNumberOfRowsGreaterThanOrEqualTo(5);
+assertThat(changes).hasNumberOfRowsLessThan(6);
+assertThat(changes).hasNumberOfRowsLessThanOrEqualTo(6);
+//验证这张表为空
+assertThat(table).isEmpty();
+```
+
+#### 断言值的内容
+
+```java
+assertThat(table).row(1).value("birthdate")
+                        .isAfter(DateValue.of(1950, 8, 8));
+
+assertThat(table).row(1).value("size")
+                        .isGreaterThan(1.5);
+//验证值是否接近2，偏差为0.5，即[1.5,2.5]这一范围的值
+assertThat(table).row(1).value("size")
+                        .isCloseTo(2, 0.5);
+//验证值是否为true
+assertThat(table).row(3).value("live").isEqualTo(true);
+assertThat(request).column("size").value().isEqualTo(1.77)
+                                  .value().isEqualTo(50)
+                                  .value().isEqualTo(0).isZero();
+//验证是否与给定值不相等
+assertThat(table).row(3).value("live").isNotEqualTo(false)
+                 .row(5).value("live").isNotEqualTo(false);
+//验证是否为null
+assertThat(table).column().value(1).isNull()
+                          .value().isNotNull();
+//验证值的类型
+assertThat(table).row(4).value("firstname").isOfType(ValueType.TEXT);
+assertThat(request).row(1).value(2).isText();
+```
+
+
+
