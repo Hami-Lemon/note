@@ -15,7 +15,7 @@ c语言连接MySQL数据库，vistual studio环境下
 ![](https://gitee.com/Hami-Lemon/image-repo/raw/master/images/2021/05/25/20210525115048.png)
 
 
-```
+```c
 #include <winsock.h>
 #include <mysql.h>
 #include <stdio.h>
